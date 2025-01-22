@@ -71,6 +71,7 @@ class SnowFlake:
                 TYPE=CSV,
                 SKIP_HEADER=1,
                 FIELD_DELIMITER='\t'
+                NULL_IF=('NULL', 'null', ' ')
             )
             ON_ERROR=ABORT_STATEMENT
             PURGE=TRUE
