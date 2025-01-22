@@ -87,4 +87,23 @@ docker run --rm storied-etl  2024-12-01 2024-12-31 0
 ```
 
 
+# Proposal Next Steps
+
+---
+
+To improving the project to enhance  reliability, scalability, and maintainability:
+
+1. **Add Unit Tests**
+2. **Add Retry Logic on Failures**
+3. Add Rate Limit and API Validation
+4. Refactor Architecture for Cloud Run Functions
+5. Orchestrate with Apache Airflow for daily reports
+
+
+
+
+
+
+
+
 
