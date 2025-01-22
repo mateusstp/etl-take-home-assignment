@@ -1,7 +1,4 @@
-import tempfile
-from datetime import datetime as dt
 from dataclasses import dataclass
-import pandas as pd
 import os
 from snowflake.connector import ProgrammingError
 import snowflake.connector
@@ -24,7 +21,6 @@ class SnowFlake:
             account=SNOWFLAKE_ACCOUNT_NAME,
             warehouse=SNOWFLAKE_WAREHOUSE,
             database=SNOWFLAKE_DATABASE
-            # schema=SNOWFLAKE_SCHEMA_TEMP
         )
         self.temp_table = SNOWFLAKE_TEMP_TABLE
         self.prd_table = SNOWFLAKE_PRD_TABLE
@@ -34,34 +30,20 @@ class SnowFlake:
         cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
         return len(list(cursor)) > 0
 
-    def run_ddl_query(self, query):
+    def run_query(self, query):
         cursor = self.conn.cursor()
         result = cursor.execute(query)
-        return  result
+        return result
 
-    def load(self, file_path, table_name):
+    def copy_file_to_table(self, file_path, table_name):
         file_name = file_path.split(os.sep)[-1]
         table_name_id = ".".join(table_name.split(".")[1:])
         print(f"Loading data into {table_name_id}...")
         cursor = self.conn.cursor()
         stg_name = "stg_" + file_name.replace("-", "_").replace(".", "_")
-
-        # cursor.execute("USE SCHEMA")
-        # user_stage_query = f"CREATE OR REPLACE STAGE {stg_name}"
-        # print(user_stage_query)
-        # cursor.execute(user_stage_query)
-
-        # put_query = f"PUT file://{file_path} @%{table_name_id}"
         put_query = f"PUT file://{file_path} @~/staged/{stg_name}"
         print(put_query)
         cursor.execute(put_query)
-        # copy_query = f"""
-        #     COPY INTO
-        #             {table_name_id}
-        #     FROM
-        #         @%{table_name_id}
-        #      FILE_FORMAT = (TYPE = CSV FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1)
-        # """
         copy_query = f"""
             COPY INTO
                     {table_name_id}
@@ -79,22 +61,7 @@ class SnowFlake:
         print(copy_query)
         result = cursor.execute(copy_query)
         print(result)
-        # cursor.execute(f"DROP STAGE {stg_name}")
         cursor.close()
-
-    def merge_temp_to_prod(self,):
-        cursor = self.conn.cursor()
-        merge_query = f"""
-        MERGE INTO {self.prd_table} AS prod
-        USING {self.temp_table} AS temp
-        ON prod.date = temp.date
-        WHEN MATCHED THEN
-            UPDATE SET prod.sales = temp.sales
-        WHEN NOT MATCHED THEN
-            INSERT (date, sales) VALUES (temp.date, temp.sales);
-        """
-        cursor.execute(merge_query)
-        self.conn.close()
 
     def test_credentials(self, ):
         try:
