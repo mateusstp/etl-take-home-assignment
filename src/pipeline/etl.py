@@ -31,10 +31,13 @@ class SalesReportELT(ELT):
         return self.source.get_sales_by_day(report_date)
 
     def load(self, csv_file_path):
-        self.sink.load(csv_file_path, self.sink.temp_table)
+        self.sink.copy_file_to_table(csv_file_path, self.sink.temp_table)
 
     def transform(self):
-        pass
+        with open("src/sql/create_prod_sales_ms.sql", "r") as f:
+            ddl_query = f.read()
+        create_prod_table = ddl_query.format(PRD_TABLE=self.sink.prd_table, TEMP_TABLE=self.sink.temp_table)
+        self.sink.run_query(create_prod_table)
 
     def run(self, report_date):
         csv_file_path = self.extract(report_date)
